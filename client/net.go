@@ -16,7 +16,8 @@ var tag string
 
 const (
 	HAND_SHAKE_MSG = "我是打洞消息"
-	Heart          = "HeartTest"
+	Ping          = "Ping"
+	Pong           = "Pong"
 	Connect        = "Connect"
 )
 
@@ -29,14 +30,19 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	//建立联系
+	//与stuu建立联系
 	if _, err = conn.Write([]byte(Connect)); err != nil {
 		log.Panic(err)
 	}
+	//心跳保持
+	go heart(conn,c)
+
 	data := make([]byte, 1024)
 	n, remoteAddr, err := conn.ReadFromUDP(data)
 	if err != nil {
 		fmt.Printf("error during read: %s", err)
+	}
+	if string(data) == Pong {
 	}
 	conn.Close()
 	anotherPeer := parseAddr(string(data[:n]))
@@ -44,7 +50,7 @@ func main() {
 	bidirectionHole(srcAddr, &anotherPeer)
 }
 
-//和服务器不停发送心跳,保持连接
+//和服务器不停发送心跳,保持nat端口映射
 func heart(conn *net.UDPConn, signal chan os.Signal) {
 	for true {
 		if len(signal) > 0 {
@@ -54,9 +60,10 @@ func heart(conn *net.UDPConn, signal chan os.Signal) {
 				break
 			}
 		}
-		if _, err := conn.Write([]byte(Heart)); err != nil {
+		if _, err := conn.Write([]byte(Ping)); err != nil {
 			log.Panic(err)
 		}
+		time.Sleep(3)
 	}
 }
 func parseAddr(addr string) net.UDPAddr {
