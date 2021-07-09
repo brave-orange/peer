@@ -1,17 +1,16 @@
 package main
 
 import (
-"fmt"
-"log"
-"net"
-"time"
+	"fmt"
+	"log"
+	"net"
 )
 
 const (
-	HAND_SHAKE_MSG = "我是打洞消息"
 	Ping           = "Ping"
 	Pong           = "Pong"
 	Connect        = "Connect"
+	FindNode       = "FindNode"
 )
 
 func main() {
@@ -39,17 +38,25 @@ func main() {
 			Pongs <- remoteAddr
 		case Connect :
 			peers = append(peers, *remoteAddr)
+		case FindNode:
+			peerstr := ""
+			for _,item := range peers{
+				peerstr = fmt.Sprintf("%s,%s",peerstr,item.String())
+			}
+			listener.WriteToUDP([]byte(peerstr), remoteAddr)
 		}
-		if len(peers) == 2 {
-			log.Printf("进行UDP打洞,建立 %s <--> %s 的连接\n", peers[0].String(), peers[1].String())
-			listener.WriteToUDP([]byte(peers[1].String()), &peers[0])
-			listener.WriteToUDP([]byte(peers[0].String()), &peers[1])
-			time.Sleep(time.Second * 8)
-			log.Println("中转服务器退出,仍不影响peers间通信")
-			return
-		}
+		//if len(peers) == 2 {
+		//	log.Printf("进行UDP打洞,建立 %s <--> %s 的连接\n", peers[0].String(), peers[1].String())
+		//	listener.WriteToUDP([]byte(peers[1].String()), &peers[0])
+		//	listener.WriteToUDP([]byte(peers[0].String()), &peers[1])
+		//	time.Sleep(time.Second * 8)
+		//	log.Println("中转服务器退出,仍不影响peers间通信")
+		//	return
+		//}
 	}
 }
+
+
 
 //
 func sendPong(conn *net.UDPConn, Pongs <-chan *net.UDPAddr) {
